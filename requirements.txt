@@ -3,6 +3,5 @@ pandas
 matplotlib
 plotly
 wordcloud 
-calendar
-os
 pyarrow
+
