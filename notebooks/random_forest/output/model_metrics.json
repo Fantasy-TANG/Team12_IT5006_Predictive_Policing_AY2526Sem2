@@ -1,0 +1,19 @@
+{
+  "test_set": {
+    "Accuracy": 0.8331907468426268,
+    "Precision": 0.48119857795835447,
+    "Recall": 0.6310643399493806,
+    "F1-Score": 0.5460350391885661,
+    "AUC-ROC": 0.8563053649234962
+  },
+  "cv_auc_mean": 0.8747220798653444,
+  "cv_auc_std": 0.00032912009696493935,
+  "best_params": {
+    "n_estimators": 200,
+    "max_depth": 30,
+    "max_features": "sqrt",
+    "min_samples_split": 5,
+    "min_samples_leaf": 2,
+    "bootstrap": true
+  }
+}

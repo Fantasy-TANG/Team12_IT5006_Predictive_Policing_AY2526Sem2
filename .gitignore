@@ -1,0 +1,6 @@
+
+# Large data files — do not commit
+*.parquet
+*.joblib
+chicago_*.csv
+.DS_Store
