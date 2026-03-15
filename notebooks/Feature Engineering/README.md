@@ -12,7 +12,7 @@ dataset used for all downstream model training and evaluation.
 | File | Description |
 |------|-------------|
 | `feature_engineering.ipynb` | Full feature engineering pipeline |
-| `crime_data_2014_2025.parquet` | Dataset |
+| `/figure` | Plots |
 
 > Raw data source: [Chicago Data Portal](https://data.cityofchicago.org/Public-Safety/Crimes-2001-to-Present/ijzp-q8t2)
 
