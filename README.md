@@ -15,9 +15,12 @@ project-root/
 
 ```
 
-## Milestone 1
-
 ### Dashboard_v1: 
 [![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://team12it5006predictivepolicingay2526sem2-jrwur66ihmgelunxnewgl.streamlit.app/)
 
 This interactive dashboard provides an overview of Chicago crime data from 2014 to 2024. It focuses on temporal trends, behavioral patterns, and geospatial distributions to provide actionable insights into urban safety.
+
+### Dashboard_v2:
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://team12it5006predictivepolicingay2526sem2-3fcqqtw64pqifav9chqcn.streamlit.app/)
+
+This dashboard predicts Chicago crime arrest likelihood, compares model performance, to support transparent data-informed analysis and operational decisions citywide.
