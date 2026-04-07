@@ -48,6 +48,20 @@ LOCATION_OPTIONS = [
 
 DISTRICT_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19, 20, 22, 24, 25, 31]
 
+MODEL_OPTIONS = [
+    "Logistic Regression",
+    "Random Forest",
+    "XGBoost",
+    "LightGBM",
+]
+
+MODEL_FILE_KEYS = {
+    "Logistic Regression": "logistic_regression",
+    "Random Forest": "random_forest",
+    "XGBoost": "xgboost",
+    "LightGBM": "lightgbm",
+}
+
 
 @st.cache_resource
 def load_model(model_path: str):
@@ -176,7 +190,7 @@ def build_feature_vector(
 
 
 def render_prediction_page():
-    st.title("Page 1: Arrest Prediction Tool")
+    st.title("Arrest Prediction Tool")
     st.write("Enter a case profile and click Predict to estimate arrest likelihood.")
 
     col1, col2 = st.columns(2)
@@ -195,6 +209,8 @@ def render_prediction_page():
         with row_day:
             day = st.selectbox("Day", list(range(1, max_day + 1)))
         hour = st.slider("Hour", min_value=0, max_value=23, value=12)
+        st.write("")
+        st.write("")
         domestic = st.checkbox("Domestic")
 
     if st.button("Predict", type="primary"):
@@ -235,8 +251,12 @@ def render_prediction_page():
 
         st.subheader("Prediction Result")
         arrest_text = "Yes" if pred_label == 1 else "No"
-        st.write(f"Arrest predicted: **{arrest_text}**")
-        st.metric("Arrest Probability", f"{pred_prob:.2%}")
+
+        result_col1, result_col2 = st.columns(2)
+        with result_col1:
+            st.metric("Arrest Predicted", arrest_text)
+        with result_col2:
+            st.metric("Arrest Probability", f"{pred_prob:.2%}")
         st.progress(min(max(int(round(pred_prob * 100)), 0), 100))
 
         if pred_prob > 0.6:
@@ -253,7 +273,7 @@ def render_prediction_page():
         hist_col1, hist_col2 = st.columns(2)
 
         with hist_col1:
-            st.markdown("**Same Primary Type + District**")
+            st.markdown("**Same Primary Type & District**")
             if type_district_df is None:
                 st.info("Historical file not found: arrest_rate_type_district.csv")
             else:
@@ -263,7 +283,7 @@ def render_prediction_page():
                 )
                 match = type_district_df.loc[mask]
                 if match.empty:
-                    st.info("No historical data for this Primary Type + District.")
+                    st.info("No historical data for this Primary Type & District.")
                 else:
                     row = match.iloc[0]
                     st.metric("Historical Arrest Rate", f"{float(row['arrest_rate']):.2%}")
@@ -284,7 +304,7 @@ def render_prediction_page():
 
 
 def render_model_comparison_page():
-    st.title("Page 2: Model Comparison")
+    st.title("Model Comparison")
 
     st.subheader("Overall Model Performance")
     model_df = load_csv(MODEL_COMPARISON_PATH)
@@ -293,15 +313,46 @@ def render_model_comparison_page():
     else:
         preferred_cols = ["Model", "Accuracy", "Precision", "Recall", "F1", "AUC"]
         available_cols = [col for col in preferred_cols if col in model_df.columns]
-        st.dataframe(model_df[available_cols], use_container_width=True)
+        display_df = model_df[available_cols].copy()
+        metric_cols = [
+            col
+            for col in display_df.columns
+            if col != "Model" and pd.api.types.is_numeric_dtype(display_df[col])
+        ]
+        if metric_cols:
+            display_df[metric_cols] = display_df[metric_cols].round(4)
+        styled_df = display_df.style.hide(axis="index")
+        if metric_cols:
+            styled_df = styled_df.highlight_max(subset=metric_cols, color="#c6f6d5")
+        st.dataframe(styled_df, use_container_width=True)
 
-    if os.path.exists(ROC_ALL_MODELS_PATH):
-        st.image(ROC_ALL_MODELS_PATH, caption="ROC Curve Comparison", use_container_width=True)
-    else:
-        st.info("ROC comparison image not found: roc_all_models.png")
+    overview_col1, overview_col2 = st.columns(2)
+    with overview_col1:
+        st.markdown("**Features Used**")
+        st.markdown(
+            "\n".join(
+                [
+                    "- Primary Type",
+                    "- Location Description",
+                    "- District",
+                    "- Year",
+                    "- Month",
+                    "- Day",
+                    "- Hour",
+                    "- Domestic",
+                ]
+            )
+        )
+
+    with overview_col2:
+        st.markdown("**ROC Curve**")
+        if os.path.exists(ROC_ALL_MODELS_PATH):
+            st.image(ROC_ALL_MODELS_PATH, caption="ROC Curve Comparison", use_container_width=True)
+        else:
+            st.info("ROC comparison image not found: roc_all_models.png")
 
     st.divider()
-    st.subheader("Per-Model Detail")
+    st.subheader("Model Details")
 
     selected_model = st.selectbox("Choose a model", MODEL_OPTIONS)
     model_key = MODEL_FILE_KEYS[selected_model]
@@ -310,21 +361,25 @@ def render_model_comparison_page():
     report_path = os.path.join(RESULTS_DIR, f"classification_report_{model_key}.csv")
     feat_imp_path = os.path.join(RESULTS_DIR, f"feature_importance_{model_key}.png")
 
-    if os.path.exists(conf_mat_path):
-        st.image(conf_mat_path, caption=f"Confusion Matrix - {selected_model}", use_container_width=True)
-    else:
-        st.info(f"Confusion matrix not available for {selected_model}.")
-
     report_df = load_classification_report(report_path)
     if report_df is None:
         st.info(f"Classification report not available for {selected_model}.")
     else:
         st.dataframe(report_df.round(2), use_container_width=True)
 
-    if os.path.exists(feat_imp_path):
-        st.image(feat_imp_path, caption=f"Feature Importance - {selected_model}", use_container_width=True)
-    else:
-        st.info(f"Feature importance chart not available for {selected_model}.")
+    detail_col1, detail_col2 = st.columns(2)
+
+    with detail_col1:
+        if os.path.exists(conf_mat_path):
+            st.image(conf_mat_path, caption=f"Confusion Matrix - {selected_model}", use_container_width=True)
+        else:
+            st.info(f"Confusion matrix not available for {selected_model}.")
+
+    with detail_col2:
+        if os.path.exists(feat_imp_path):
+            st.image(feat_imp_path, caption=f"Feature Importance - {selected_model}", use_container_width=True)
+        else:
+            st.info(f"Feature importance chart not available for {selected_model}.")
 
 
 st.sidebar.title("Navigation")
@@ -332,6 +387,23 @@ page = st.sidebar.radio(
     "Go to",
     ["Page 1: Arrest Prediction Tool", "Page 2: Model Comparison"],
 )
+
+st.sidebar.subheader("About")
+st.sidebar.write(
+    "This dashboard predicts Chicago crime arrest likelihood, compares model "
+    "performance, to support transparent data-informed "
+    "analysis and operational decisions citywide."
+)
+
+st.sidebar.subheader("Contributors")
+st.sidebar.markdown("**IT5006       Group 12**")
+contrib_col1, contrib_col2 = st.sidebar.columns(2)
+with contrib_col1:
+    st.write("LI Mingyue")
+    st.write("TANG Yun")
+with contrib_col2:
+    st.write("LI Sitong")
+    st.write("WU Silin")
 
 if page == "Page 1: Arrest Prediction Tool":
     render_prediction_page()
