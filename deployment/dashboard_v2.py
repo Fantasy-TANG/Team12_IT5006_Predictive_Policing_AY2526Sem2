@@ -324,6 +324,7 @@ def render_model_comparison_page():
         styled_df = display_df.style.hide(axis="index")
         if metric_cols:
             styled_df = styled_df.highlight_max(subset=metric_cols, color="#c6f6d5")
+            styled_df = styled_df.format({col: "{:.4f}" for col in metric_cols})
         st.dataframe(styled_df, use_container_width=True)
 
     overview_col1, overview_col2 = st.columns(2)
