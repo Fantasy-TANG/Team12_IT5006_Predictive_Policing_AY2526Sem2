@@ -202,7 +202,7 @@ def render_prediction_page():
     with col2:
         row_year, row_month, row_day = st.columns(3)
         with row_year:
-            year = st.selectbox("Year", list(range(2015, 2025)))
+            year = st.selectbox("Year", list(range(2015, 2027)))
         with row_month:
             month = st.selectbox("Month", list(range(1, 13)))
         max_day = int(pd.Timestamp(year=year, month=month, day=1).days_in_month)
